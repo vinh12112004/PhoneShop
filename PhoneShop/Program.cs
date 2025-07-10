@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PhoneShop.Configurations;
 using PhoneShop.Data;
 using PhoneShop.Data.Repository;
+using PhoneShop.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection"));
 });
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 builder.Services.AddScoped(typeof(IPhoneShopRepository<>), typeof(PhoneShopRepository<>));
 
