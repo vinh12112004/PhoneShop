@@ -1,0 +1,6 @@
+@PhoneShop_HostAddress = http://localhost:5197
+
+GET {{PhoneShop_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
