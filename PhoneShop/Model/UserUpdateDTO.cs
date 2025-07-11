@@ -1,6 +1,6 @@
-﻿namespace PhoneShop.Data
+﻿namespace PhoneShop.Model
 {
-    public class User
+    public class UserUpdateDTO
     {
         public int Id { get; set; }
         public string Username { get; set; }
@@ -9,8 +9,5 @@
         public string Gender { get; set; }
         public string AddressCompany { get; set; }
         public string AddressHome { get; set; }
-        public int RoleId { get; set; }
-        public Role Role { get; set; }
-        public Cart Cart { get; set; }
     }
 }

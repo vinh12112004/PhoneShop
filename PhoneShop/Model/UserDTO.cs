@@ -1,4 +1,6 @@
-﻿namespace PhoneShop.Model
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
+namespace PhoneShop.Model
 {
     public class UserDTO
     {
@@ -7,8 +9,9 @@
         public string Password { get; set; }
         public string Email { get; set; }
         public string Gender { get; set; }
-        public string AddressCopany { get; set; }
+        public string AddressCompany { get; set; }
         public string AddressHome { get; set; }
         public int RoleId { get; set; }
+        public string RoleName { get; set; }
     }
 }

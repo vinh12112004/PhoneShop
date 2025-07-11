@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PhoneShop.Model;
@@ -29,7 +30,7 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> CreateUserAsync(UserDTO dto)
+        public async Task<ActionResult<APIResponse>> CreateUserAsync(RegisterDTO dto)
         {
             try
             {
@@ -55,7 +56,7 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetUsert()
+        public async Task<ActionResult<APIResponse>> GetUser()
         {
             try
             {
@@ -125,10 +126,17 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> UpdateUser([FromBody] UserDTO dto)
+        [Authorize]
+        public async Task<ActionResult<APIResponse>> UpdateUser([FromBody] UserUpdateDTO dto)
         {
             try
             {
+                // role ?
+                var userIdClaim = User.FindFirst("UserId")?.Value;
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                if(role != "Admin" && userIdClaim != dto.Id.ToString())
+                    return Forbid();
+
                 if (dto == null || dto.Id <= 0)
                     return BadRequest();
                 var result = await _userService.UpdateUser(dto);
@@ -141,6 +149,7 @@ namespace PhoneShop.Controllers
             {
                 _apiResponse.Status = false;
                 _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.Errors ??= new List<string>();
                 _apiResponse.Errors.Add(ex.Message);
                 return _apiResponse;
             }

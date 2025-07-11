@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PhoneShop.Data;
 
@@ -10,9 +11,11 @@ using PhoneShop.Data;
 namespace PhoneShop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250711000157_renamecopany")]
+    partial class renamecopany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,51 +23,6 @@ namespace PhoneShop.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("PhoneShop.Data.Cart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("Carts", (string)null);
-                });
-
-            modelBuilder.Entity("PhoneShop.Data.CartItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CartId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("CartItems", (string)null);
-                });
 
             modelBuilder.Entity("PhoneShop.Data.Product", b =>
                 {
@@ -179,38 +137,6 @@ namespace PhoneShop.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("PhoneShop.Data.Cart", b =>
-                {
-                    b.HasOne("PhoneShop.Data.User", "User")
-                        .WithOne("Cart")
-                        .HasForeignKey("PhoneShop.Data.Cart", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Carts_Users");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PhoneShop.Data.CartItem", b =>
-                {
-                    b.HasOne("PhoneShop.Data.Cart", "Cart")
-                        .WithMany("CartItems")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_CartItems_Carts");
-
-                    b.HasOne("PhoneShop.Data.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("PhoneShop.Data.User", b =>
                 {
                     b.HasOne("PhoneShop.Data.Role", "Role")
@@ -223,20 +149,9 @@ namespace PhoneShop.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("PhoneShop.Data.Cart", b =>
-                {
-                    b.Navigation("CartItems");
-                });
-
             modelBuilder.Entity("PhoneShop.Data.Role", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("PhoneShop.Data.User", b =>
-                {
-                    b.Navigation("Cart")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

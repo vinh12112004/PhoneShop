@@ -55,5 +55,19 @@ namespace PhoneShop.Data.Repository
 
             return dbRecord;
         }
+        public async Task<T> GetAsync(
+            Expression<Func<T, bool>> filter,
+            Func<IQueryable<T>, IQueryable<T>> include,
+             bool useAsNoTracking = false)
+        {
+            IQueryable<T> query = _dbSet;
+            if (include != null)
+                query = include(query);
+            if(useAsNoTracking)
+                return await query.AsNoTracking().FirstOrDefaultAsync(filter);
+            else
+                return await query.FirstOrDefaultAsync(filter);
+        }
+
     }
 }

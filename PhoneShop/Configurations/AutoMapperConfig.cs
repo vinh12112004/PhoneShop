@@ -9,8 +9,14 @@ namespace PhoneShop.Configurations
         public AutoMapperConfig()
         {
             CreateMap<Product, ProductDTO>().ReverseMap();
-            CreateMap<User, UserDTO>().ReverseMap();
+            CreateMap<User, UserDTO>()
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName));
             CreateMap<User, UserReadonyDTO>().ReverseMap();
+            CreateMap<User, RegisterDTO>().ReverseMap();
+            CreateMap<User, UserUpdateDTO>().ReverseMap();
+            CreateMap<Cart, CartDTO>();
+            //CreateMap<CartItem, CartItemDTO>()
+            //    .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Product.Price));
             // Add other mappings here as needed
         }
     }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.EntityFrameworkCore;
 using PhoneShop.Data;
 using PhoneShop.Data.Repository;
 using PhoneShop.Model;
@@ -33,7 +34,7 @@ namespace PhoneShop.Services
                 numBytesRequested: 256 / 8));
             return $"{hash}.{Convert.ToBase64String(salt)}";
         }
-        public async Task<bool> CreateUser(UserDTO dto)
+        public async Task<bool> CreateUser(RegisterDTO dto)
         {
             ArgumentNullException.ThrowIfNull(dto, $"the argument {nameof(dto)} is null");
             var existingUser = await _userRepository.GetAsync(x => x.Username.Equals(dto.Username));
@@ -64,7 +65,16 @@ namespace PhoneShop.Services
             }
             return _mapper.Map<UserReadonyDTO>(user);
         }
-        public async Task<bool> UpdateUser(UserDTO dto)
+        public async Task<UserDTO> GetUserByUsername(string username)
+        {
+            var user = await _userRepository.GetAsync(u => u.Username == username, q => q.Include(x => x.Role));
+            if (user == null)
+            {
+                throw new KeyNotFoundException($"User with username {username} not found.");
+            }
+            return _mapper.Map<UserDTO>(user);
+        }
+        public async Task<bool> UpdateUser(UserUpdateDTO dto)
         {
             ArgumentNullException.ThrowIfNull(dto, $"the argument {nameof(dto)} is null");
             var user = await _userRepository.GetAsync(x => x.Id == dto.Id, true);
@@ -72,12 +82,12 @@ namespace PhoneShop.Services
             {
                 throw new KeyNotFoundException($"User with ID {dto.Id} not found.");
             }
-            var userToUpdate = _mapper.Map<User>(dto);
+            _mapper.Map(dto, user);
             if (!string.IsNullOrEmpty(dto.Password))
             {
-                userToUpdate.Password = CreatePasswordSalt(dto.Password);
+                user.Password = CreatePasswordSalt(dto.Password);
             }
-            await _userRepository.UpdateAsync(userToUpdate);
+            await _userRepository.UpdateAsync(user);
             return true;
         }
         public async Task<bool> DeleteUser(int id)

@@ -10,5 +10,9 @@ namespace PhoneShop.Data.Repository
         Task<T> UpdateAsync(T dbRecord);
         Task<bool> DeleteAsync(T dbRecord);
         Task<List<T>> GetAllAsyncByFilter(Expression<Func<T, bool>> filter, bool useAsNoTracking = false);
+        Task<T> GetAsync(
+            Expression<Func<T, bool>> filter,
+            Func<IQueryable<T>, IQueryable<T>> include,
+            bool useAsNoTracking = false);
     }
 }

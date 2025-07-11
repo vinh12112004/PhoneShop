@@ -19,6 +19,7 @@ namespace PhoneShop.Data.Config
             builder.Property(u => u.Email)
                 .IsRequired()
                 .HasMaxLength(100);
+            
             builder.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
