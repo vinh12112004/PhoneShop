@@ -173,6 +173,7 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<APIResponse>> UpdateProduct([FromBody] ProductDTO dto)
         {
             try
@@ -202,6 +203,7 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<APIResponse>> DeleteProduct(int id)
         {
             try
@@ -214,7 +216,7 @@ namespace PhoneShop.Controllers
                 var existingStudent = await _productRepository.GetAsync(student => student.Id == id);
                 if (existingStudent == null)
                 {
-                    return NotFound($"cant find student have id={id}");
+                    return NotFound($"cant find product have id={id}");
                 }
                 await _productRepository.DeleteAsync(existingStudent);
                 _apiResponse.Data = true;

@@ -14,6 +14,7 @@ namespace PhoneShop.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<RateProduct> RateProducts { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new ProductConfig());
@@ -21,6 +22,7 @@ namespace PhoneShop.Data
             modelBuilder.ApplyConfiguration(new RoleConfig());
             modelBuilder.ApplyConfiguration(new CartConfig());
             modelBuilder.ApplyConfiguration(new CartItemConfig());
+            modelBuilder.ApplyConfiguration(new RateProductConfig());
         }
     }
 }

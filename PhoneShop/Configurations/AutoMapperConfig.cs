@@ -15,6 +15,7 @@ namespace PhoneShop.Configurations
             CreateMap<User, RegisterDTO>().ReverseMap();
             CreateMap<User, UserUpdateDTO>().ReverseMap();
             CreateMap<Cart, CartDTO>();
+            CreateMap<RateProductDTO, RateProduct>().ReverseMap();
             //CreateMap<CartItem, CartItemDTO>()
             //    .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Product.Price));
             // Add other mappings here as needed

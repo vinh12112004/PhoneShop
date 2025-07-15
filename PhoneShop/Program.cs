@@ -20,6 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IRateProductServicce, RateProductService>();
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 builder.Services.AddScoped(typeof(IPhoneShopRepository<>), typeof(PhoneShopRepository<>));
 

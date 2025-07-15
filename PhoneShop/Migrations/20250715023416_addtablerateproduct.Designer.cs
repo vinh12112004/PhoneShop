@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PhoneShop.Data;
 
@@ -10,9 +11,11 @@ using PhoneShop.Data;
 namespace PhoneShop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250715023416_addtablerateproduct")]
+    partial class addtablerateproduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,7 +124,7 @@ namespace PhoneShop.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RateProducts", (string)null);
+                    b.ToTable("RateProducts");
                 });
 
             modelBuilder.Entity("PhoneShop.Data.Role", b =>
@@ -243,15 +246,13 @@ namespace PhoneShop.Migrations
                         .WithMany("RateProducts")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_RateProducts_Products");
+                        .IsRequired();
 
                     b.HasOne("PhoneShop.Data.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_RateProducts_Users");
+                        .IsRequired();
 
                     b.Navigation("Product");
 

@@ -2,41 +2,104 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PhoneShop.Data;
+using PhoneShop.Data.Repository;
 using PhoneShop.Model;
 using PhoneShop.Services;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace PhoneShop.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    [Authorize]
+    public class RateProductController : ControllerBase
     {
-        private readonly ILogger<UserController> _logger;
+        private readonly IRateProductServicce _rateProductService;
         private readonly IMapper _mapper;
         private readonly APIResponse _apiResponse;
-        private readonly IUserService _userService;
-        public UserController(ILogger<UserController> logger, IMapper mapper, IUserService userService)
+        public RateProductController(IRateProductServicce rateProductService, IMapper mapper)
         {
-            _logger = logger;
+            _rateProductService = rateProductService;
             _mapper = mapper;
             _apiResponse = new APIResponse();
-            _userService = userService;
         }
         [HttpPost]
-        [Route("CreateUser")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [Route("Create", Name = "CreateRateProduct")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> CreateUserAsync(RegisterDTO dto)
+        public async Task<ActionResult<APIResponse>> CreateRateProduct(RateProductDTO dto)
+        {
+
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value);
+                if (dto == null )
+                    return BadRequest("RateProduct data is null");
+                var result =await _rateProductService.AddOrUpdateRateProductAsync(userId, dto);
+                _apiResponse.Data = result;
+                _apiResponse.Status = true;
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                return Ok(_apiResponse);
+            }
+            catch (Exception ex)
+            {
+                if (_apiResponse.Errors == null) _apiResponse.Errors = new List<string>();
+                _apiResponse.Status = false;
+                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.Errors.Add(ex.Message);
+                return _apiResponse;
+            }
+        }
+        [HttpPut]
+        [Route("Update", Name = "update")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<APIResponse>> UpdateRateProduct(RateProductDTO dto)
         {
             try
             {
-                var userCreated = await _userService.CreateUser(dto);
+                var userId = int.Parse(User.FindFirst("UserId")?.Value);
+                if (userId == null)
+                    return Unauthorized("UserId claim is missing");
+                if (dto == null)
+                    return BadRequest("RateProduct data is null");
+                var result = await _rateProductService.AddOrUpdateRateProductAsync(userId, dto);
+                _apiResponse.Data = result;
+                _apiResponse.Status = true;
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                return Ok(_apiResponse);
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.Errors ??= new List<string>();
+                _apiResponse.Status = false;
+                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.Errors.Add(ex.Message);
+                return _apiResponse;
+            }
+        }
+        [HttpGet]
+        [Route("All", Name = "GetAllRateProduct")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<APIResponse>> GetRateProduct()
+        {
+            try
+            {
+                var rateProducts = await _rateProductService.GetRateProduct();
 
-                _apiResponse.Data = userCreated;
+                _apiResponse.Data = _mapper.Map<List<RateProductDTO>>(rateProducts);
                 _apiResponse.Status = true;
                 _apiResponse.StatusCode = HttpStatusCode.OK;
                 return Ok(_apiResponse);
@@ -48,62 +111,33 @@ namespace PhoneShop.Controllers
                 _apiResponse.Errors.Add(ex.Message);
                 return _apiResponse;
             }
-        }
-        [HttpGet]
-        [Route("All", Name = "GetAllUser")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetUser()
-        {
-            try
-            {
-                var users = await _userService.GetAllUsers();
-
-                _apiResponse.Data = users;
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
-                return Ok(_apiResponse);
-            }
-            catch (Exception ex)
-            {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
-            }
 
         }
-
         [HttpGet]
-        [Route("{id}", Name = "GetUsertById")]
+        [Route("{id}", Name = "GetRateProductById")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> GetUserById(int id)
+        public async Task<ActionResult<APIResponse>> GetRateProductById(int id)
         {
             try
             {
                 if (id <= 0)
                 {
-                    _logger.LogWarning("Bad request for user id={Id}", id);
                     return BadRequest();
                 }
 
-                var user = await _userService.GetUserById(id);
+                var rateProduct = await _rateProductService.GetRateProductByIdAsync(id);
                 // NotFound - 404 - client error
-                if (user == null)
+                if (rateProduct == null)
                 {
-                    _logger.LogError("user with id={Id} not found", id);
-                    return NotFound($"cant find user have id={id}");
+                    return NotFound($"cant find rate product have id={id}");
                 }
 
-                _apiResponse.Data = user;
+                _apiResponse.Data = _mapper.Map<RateProductDTO>(rateProduct);
                 _apiResponse.Status = true;
                 _apiResponse.StatusCode = HttpStatusCode.OK;
                 // Ok - 200 - success
@@ -119,56 +153,21 @@ namespace PhoneShop.Controllers
             // BadRequest - 400 - client error
 
         }
-        [HttpPut]
-        [Route("Update")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [Authorize]
-        public async Task<ActionResult<APIResponse>> UpdateUser([FromBody] UserUpdateDTO dto)
-        {
-            try
-            {
-                // role ?
-                var userIdClaim = User.FindFirst("UserId")?.Value;
-                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-                if(role != "Admin" && userIdClaim != dto.Id.ToString())
-                    return Forbid();
-
-                if (dto == null || dto.Id <= 0)
-                    return BadRequest();
-                var result = await _userService.UpdateUser(dto);
-                _apiResponse.Data = result;
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
-                return Ok(_apiResponse);
-            }
-            catch (Exception ex)
-            {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors ??= new List<string>();
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
-            }
-
-        }
-        [HttpDelete("Delete/{id}", Name = "DeleteUserById")]
+        [HttpDelete]
+        [Route("Delete/{id}", Name = "DeleteRateProduct")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<APIResponse>> DeleteUser(int id)
+        public async Task<ActionResult<APIResponse>> DeleteRateProduct(int id)
         {
             try
             {
-                var result = await _userService.DeleteUser(id);
-
+                var userId = int.Parse(User.FindFirst("UserId")?.Value);
+                if (id <= 0)
+                    return BadRequest();
+                var result = await _rateProductService.RemoveRateProductAsync(userId, id);
                 _apiResponse.Data = result;
                 _apiResponse.Status = true;
                 _apiResponse.StatusCode = HttpStatusCode.OK;
@@ -178,11 +177,9 @@ namespace PhoneShop.Controllers
             {
                 _apiResponse.Status = false;
                 _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors ??= new List<string>();
                 _apiResponse.Errors.Add(ex.Message);
                 return _apiResponse;
             }
-
         }
     }
 }

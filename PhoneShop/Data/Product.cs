@@ -8,5 +8,6 @@
         public double Price { get; set; }
         public double Rate { get; set; }
         public string ImageUrl { get; set; }
+        public ICollection<RateProduct> RateProducts { get; set; }
     }
 }
