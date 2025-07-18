@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PhoneShop.Data;
 
@@ -11,9 +12,11 @@ using PhoneShop.Data;
 namespace PhoneShop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250715095503_refactorImageToListImage")]
+    partial class refactorImageToListImage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,29 +24,6 @@ namespace PhoneShop.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("PhoneShop.Data.ImageProduct", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ImageProducts", (string)null);
-                });
 
             modelBuilder.Entity("PhoneShop.Data.Order", b =>
                 {
@@ -106,14 +86,13 @@ namespace PhoneShop.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.PrimitiveCollection<string>("ImageUrls")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
@@ -238,18 +217,6 @@ namespace PhoneShop.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("PhoneShop.Data.ImageProduct", b =>
-                {
-                    b.HasOne("PhoneShop.Data.Product", "Product")
-                        .WithMany("ImageProducts")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_ImageProducts_Products");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("PhoneShop.Data.Order", b =>
                 {
                     b.HasOne("PhoneShop.Data.User", "User")
@@ -322,8 +289,6 @@ namespace PhoneShop.Migrations
 
             modelBuilder.Entity("PhoneShop.Data.Product", b =>
                 {
-                    b.Navigation("ImageProducts");
-
                     b.Navigation("RateProducts");
                 });
 

@@ -69,5 +69,20 @@ namespace PhoneShop.Data.Repository
                 return await query.FirstOrDefaultAsync(filter);
         }
 
+        public async Task<List<T>> GetAllAsyncByFilter(Expression<Func<T, bool>> filter, Func<IQueryable<T>, IQueryable<T>> include)
+        {
+            IQueryable<T> query = _dbSet;
+            if (include != null)
+                query = include(query);
+            return await query.Where(filter).ToListAsync();                
+        }
+        public async Task<List<T>> GetAsyncInclude(Func<IQueryable<T>, IQueryable<T>> include)
+        {
+            IQueryable<T> query = _dbSet;
+            if (include != null)
+                query = include(query);
+            return await query.ToListAsync();
+        }
+
     }
 }

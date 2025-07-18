@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 
 namespace PhoneShop.Data.Config
@@ -20,7 +22,9 @@ namespace PhoneShop.Data.Config
                 .HasMaxLength(500);
             builder.Property(p => p.Price).IsRequired();
             builder.Property(p => p.Rate).IsRequired();
-            builder.Property(p => p.ImageUrl).IsRequired();
+            builder.Property(p => p.Category)
+                .IsRequired()
+                .HasMaxLength(50);
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using System.Text.Json.Serialization;
+﻿using PhoneShop.Data;
 
-namespace PhoneShop.Data
+namespace PhoneShop.Model.Product
 {
-    public class Product
+    public class ProductDTO
     {
         public int Id { get; set; }
         public string ProductName { get; set; }
@@ -10,8 +10,6 @@ namespace PhoneShop.Data
         public double Price { get; set; }
         public double Rate { get; set; }
         public string Category { get; set; }
-        public ICollection<ImageProduct> ImageProducts { get; set; }
-        [JsonIgnore]
-        public ICollection<RateProduct> RateProducts { get; set; }
+        public ICollection<ImageProductDTO> ImageProducts { get; set; }
     }
 }

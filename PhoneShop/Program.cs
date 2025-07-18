@@ -5,7 +5,10 @@ using Microsoft.OpenApi.Models;
 using PhoneShop.Configurations;
 using PhoneShop.Data;
 using PhoneShop.Data.Repository;
-using PhoneShop.Services;
+using PhoneShop.Middleware;
+using PhoneShop.Services.OrderService;
+using PhoneShop.Services.RateProductService;
+using PhoneShop.Services.UserService;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection"));
 });
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IRateProductServicce, RateProductService>();
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 builder.Services.AddScoped(typeof(IPhoneShopRepository<>), typeof(PhoneShopRepository<>));
@@ -80,6 +83,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 

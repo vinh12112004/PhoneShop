@@ -13,5 +13,8 @@ namespace PhoneShop.Data.Repository
         Task<T> GetAsync(
             Expression<Func<T, bool>> filter,
             Func<IQueryable<T>, IQueryable<T>> include,
-            bool useAsNoTracking = false);    }
+            bool useAsNoTracking = false);
+        Task<List<T>> GetAllAsyncByFilter(Expression<Func<T, bool>> filter, Func<IQueryable<T>, IQueryable<T>> include);
+        Task<List<T>> GetAsyncInclude(Func<IQueryable<T>, IQueryable<T>> include);
+    }
 }

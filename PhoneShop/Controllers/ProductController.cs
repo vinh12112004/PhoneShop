@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PhoneShop.Data;
 using PhoneShop.Data.Repository;
-using PhoneShop.Model;
+using PhoneShop.Model.APIResponse;
+using PhoneShop.Model.Product;
 using System.Net;
 
 namespace PhoneShop.Controllers
@@ -16,12 +18,18 @@ namespace PhoneShop.Controllers
         private readonly IMapper _mapper;
         private readonly APIResponse _apiResponse;
         private readonly IPhoneShopRepository<Product> _productRepository;
+
+        // Constructor: injects dependencies for mapping and repository access
         public ProductController(IMapper mapper, IPhoneShopRepository<Product> productRepository)
         {
             _mapper = mapper;
             _apiResponse = new APIResponse();
             _productRepository = productRepository;
         }
+
+        /// <summary>
+        /// Get all products.
+        /// </summary>
         [HttpGet]
         [Route("All", Name = "GetAllProduct")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -31,25 +39,17 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<APIResponse>> GetProduct()
         {
-            try
-            {
-                var products = await _productRepository.GetAllAsync();
-
-                _apiResponse.Data = _mapper.Map<List<ProductDTO>>(products);
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
-                return Ok(_apiResponse);
-            }
-            catch (Exception ex)
-            {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
-            }
-
+            // Retrieve all products from the repository
+            var products = await _productRepository.GetAsyncInclude(x => x.Include(x => x.ImageProducts));
+            _apiResponse.Data = _mapper.Map<List<ProductDTO>>(products);
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            return Ok(_apiResponse);
         }
 
+        /// <summary>
+        /// Get a product by its ID.
+        /// </summary>
         [HttpGet]
         [Route("{id}", Name = "GetProductById")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -60,36 +60,28 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<APIResponse>> GetProductById(int id)
         {
-            try
+            if (id <= 0)
             {
-                if (id <= 0)
-                {
-                    return BadRequest();
-                }
-
-                var product = await _productRepository.GetAsync(p => p.Id == id);
-                // NotFound - 404 - client error
-                if (product == null)
-                {
-                    return NotFound($"cant find product have id={id}");
-                }
-
-                _apiResponse.Data = _mapper.Map<ProductDTO>(product);
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
-                // Ok - 200 - success
-                return Ok(_apiResponse);
+                return BadRequest();
             }
-            catch (Exception ex)
+
+            // Find product by ID
+            var product = await _productRepository.GetAsync(p => p.Id == id, p => p.Include(p => p.ImageProducts));
+            if (product == null)
             {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
+                // Return 404 if not found
+                return NotFound($"cant find product have id={id}");
             }
-            // BadRequest - 400 - client error
 
+            _apiResponse.Data = _mapper.Map<ProductDTO>(product);
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            return Ok(_apiResponse);
         }
+
+        /// <summary>
+        /// Search products by filter (price and rate range).
+        /// </summary>
         [HttpPost]
         [Route("SearchProducts")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -100,37 +92,30 @@ namespace PhoneShop.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<APIResponse>> SearchProducts([FromBody] ProductFilterDTO dto)
         {
-            try
+            if (dto == null)
             {
-                if (dto == null)
-                {
-                    return BadRequest();
-                }
-
-                var products = await _productRepository.GetAllAsyncByFilter(p => p.Price>=dto.priceFrom && p.Price<=dto.priceTo && p.Rate>= dto.rateFrom && p.Rate <= dto.rateTo);
-                // NotFound - 404 - client error
-                if (products == null)
-                {
-                    return NotFound($"cant find product have filter");
-                }
-
-                _apiResponse.Data = _mapper.Map<List<ProductDTO>>(products);
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
-                // Ok - 200 - success
-                return Ok(_apiResponse);
+                return BadRequest();
             }
-            catch (Exception ex)
+
+            // Filter products by price and rate range
+            var products = await _productRepository.GetAllAsyncByFilter(
+                p => p.Price >= dto.priceFrom && p.Price <= dto.priceTo && p.Rate >= dto.rateFrom && p.Rate <= dto.rateTo && dto.category == p.Category
+                , p => p.Include(p => p.ImageProducts)
+                );
+            if (products == null)
             {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
+                return NotFound($"cant find product have filter");
             }
-            // BadRequest - 400 - client error
 
+            _apiResponse.Data = _mapper.Map<List<ProductDTO>>(products);
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            return Ok(_apiResponse);
         }
 
+        /// <summary>
+        /// Create a new product. Only accessible by Admin.
+        /// </summary>
         [HttpPost]
         [Route("CreateProduct")]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -141,31 +126,25 @@ namespace PhoneShop.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<APIResponse>> CreateProductAsync([FromBody] ProductDTO dto)
         {
-            try
-            {
-                if (dto == null)
-                    return BadRequest();
-                Product product = _mapper.Map<Product>(dto);
+            if (dto == null)
+                return BadRequest();
 
-                var newRecord = await _productRepository.CreateAsync(product);
+            // Map DTO to entity and create new product
+            Product product = _mapper.Map<Product>(dto);
+            var newRecord = await _productRepository.CreateAsync(product);
 
-                dto.Id = newRecord.Id;
-                _apiResponse.Data = dto;
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
+            dto.Id = newRecord.Id;
+            _apiResponse.Data = dto;
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
 
-                return CreatedAtRoute("GetProductById", new { id = dto.Id }, _apiResponse);
-            }
-            catch (Exception ex)
-            {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
-            }
-
+            // Return 201 Created with route to new product
+            return CreatedAtRoute("GetProductById", new { id = dto.Id }, _apiResponse);
         }
 
+        /// <summary>
+        /// Update an existing product. Only accessible by Admin.
+        /// </summary>
         [HttpPut]
         [Route("Update")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -176,26 +155,23 @@ namespace PhoneShop.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<APIResponse>> UpdateProduct([FromBody] ProductDTO dto)
         {
-            try
-            {
-                if (dto == null || dto.Id <= 0)
-                    return BadRequest();
-                var existingProduct = await _productRepository.GetAsync(p => p.Id == dto.Id, true);
-                if (existingProduct == null)
-                    return NotFound($"cant find Product have id={dto.Id}");
-                var newRecord = _mapper.Map<Product>(dto);
-                var id = await _productRepository.UpdateAsync(newRecord);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
-            }
+            if (dto == null || dto.Id <= 0)
+                return BadRequest();
 
+            // Check if product exists
+            var existingProduct = await _productRepository.GetAsync(p => p.Id == dto.Id, p => p.Include(p => p.ImageProducts), true);
+            if (existingProduct == null)
+                return NotFound($"cant find Product have id={dto.Id}");
+
+            // Map DTO to entity and update product
+            _mapper.Map(dto, existingProduct);
+            var id = await _productRepository.UpdateAsync(existingProduct);
+            return NoContent();
         }
+
+        /// <summary>
+        /// Delete a product by ID. Only accessible by Admin.
+        /// </summary>
         [HttpDelete("Delete/{id}", Name = "DeleteProductById")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -206,32 +182,24 @@ namespace PhoneShop.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<APIResponse>> DeleteProduct(int id)
         {
-            try
+            if (id <= 0)
             {
-                if (id <= 0)
-                {
-                    return BadRequest();
-                }
-
-                var existingStudent = await _productRepository.GetAsync(student => student.Id == id);
-                if (existingStudent == null)
-                {
-                    return NotFound($"cant find product have id={id}");
-                }
-                await _productRepository.DeleteAsync(existingStudent);
-                _apiResponse.Data = true;
-                _apiResponse.Status = true;
-                _apiResponse.StatusCode = HttpStatusCode.OK;
-                return Ok(_apiResponse);
-            }
-            catch (Exception ex)
-            {
-                _apiResponse.Status = false;
-                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Errors.Add(ex.Message);
-                return _apiResponse;
+                return BadRequest();
             }
 
+            // Find product by ID
+            var existingProduct = await _productRepository.GetAsync(student => student.Id == id);
+            if (existingProduct == null)
+            {
+                return NotFound($"cant find product have id={id}");
+            }
+
+            // Delete product
+            await _productRepository.DeleteAsync(existingProduct);
+            _apiResponse.Data = true;
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            return Ok(_apiResponse);
         }
     }
 }
